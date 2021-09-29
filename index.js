@@ -50,7 +50,8 @@ app.post("/login",(req,res,next)=>{
       if(users.length==1 &&users[0].password==password){
          var token = jwt.sign(
             {
-            username:username
+            username:username,
+            password:password
             }, 
             secretKey, 
             { expiresIn: 60 * 60 }
@@ -84,7 +85,20 @@ function verifyToken(req,res,next){
    var token = req.cookies && req.cookies["accessToken"]
    if(token){
       jwt.verify(token,secretKey,(err,user)=>{
+         var {username,password}=user;
+         console.log(username,password);
          if(!err){
+            User.find({username,password}).then(users=>{
+               //console.log(users)
+               if(users.length==1 &&users[0].password==password){
+                  next();
+               }
+               else{
+                  res.send('Invalid token');
+                  res.end();
+                  return;
+               }
+            })
             next();
          }
          else{
@@ -99,4 +113,4 @@ function verifyToken(req,res,next){
 }
 
 app.listen(process.env.PORT || 3000,()=>{console.log("Listening in port 3000")});
-console.log("hello");
+//console.log("hello");
